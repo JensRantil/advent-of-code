@@ -2,17 +2,24 @@
 import sys
 import itertools
 
-seen_before = set()
-s = 0
 with open(sys.argv[1]) as f:
-    lines = [int(line) for line in f]
+    lines = itertools.cycle(f)
+    lines = itertools.imap(int, lines)
 
-for line in itertools.cycle(lines):
-    seen_before.add(s)
-    s += line
-    print line, s, len(seen_before)
-    if s in seen_before:
-        print "Answer:", s
-        break
-else:
-    print "Found no duplicate."
+    def accumulator(i):
+        s = 0
+        for e in i:
+            yield s
+            s += e
+    lines = (e for e in accumulator(lines))
+
+    seen_before = set()
+    def pred(e):
+        res = e in seen_before
+        seen_before.add(e)
+        return not res
+
+    lines = itertools.dropwhile(pred, lines)
+    lines = itertools.islice(lines, 1)
+
+    print list(lines)[0]
